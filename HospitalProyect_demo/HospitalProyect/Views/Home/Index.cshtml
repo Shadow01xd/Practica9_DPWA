@@ -1,0 +1,149 @@
+@model HospitalProyect.ViewModels.DashboardViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var categoryLabels = Model.StaffByCategory.Keys.ToList();
+    var categoryValues = Model.StaffByCategory.Values.ToList();
+}
+
+<div class="container mt-4">
+    <h1 class="mb-1">Bienvenido, @ViewBag.UserName</h1>
+    <p class="text-muted mb-4">Resumen general del personal del sistema</p>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 border-start border-primary border-4 h-100">
+                <div class="card-body">
+                    <h5 class="text-primary fw-bold text-uppercase mb-1">Total Personal</h5>
+                    <div class="h2 font-weight-bold text-dark">@Model.TotalStaff</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 border-start border-success border-4 h-100">
+                <div class="card-body">
+                    <h5 class="text-success fw-bold text-uppercase mb-1">Activos</h5>
+                    <div class="h2 font-weight-bold text-dark">@Model.ActiveStaff</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 border-start border-danger border-4 h-100">
+                <div class="card-body">
+                    <h5 class="text-danger fw-bold text-uppercase mb-1">Inactivos</h5>
+                    <div class="h2 font-weight-bold text-dark">@Model.InactiveStaff</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3 mb-5">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-secondary">Personal por Categoría</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        @if (Model.StaffByCategory.Count == 0)
+                        {
+                            <li class="list-group-item text-muted">No hay datos para mostrar.</li>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model.StaffByCategory)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    @item.Key
+                                    <span class="badge bg-primary rounded-pill">@item.Value</span>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold text-secondary">Distribución Visual</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    @if (Model.StaffByCategory.Count == 0)
+                    {
+                        <p class="text-muted mb-0">No hay datos para mostrar.</p>
+                    }
+                    else
+                    {
+                        <div class="dashboard-chart-wrapper">
+                            <canvas id="chartCategorias"></canvas>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.StaffByCategory.Count > 0)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const categoriasLabels = @Html.Raw(JsonSerializer.Serialize(categoryLabels));
+            const categoriasDatos = @Html.Raw(JsonSerializer.Serialize(categoryValues));
+            const coloresBackground = [
+                'rgba(13, 110, 253, 0.85)',
+                'rgba(25, 135, 84, 0.85)',
+                'rgba(255, 193, 7, 0.85)',
+                'rgba(220, 53, 69, 0.85)',
+                'rgba(13, 202, 240, 0.85)',
+                'rgba(108, 117, 125, 0.85)'
+            ];
+
+            const ctx = document.getElementById('chartCategorias');
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoriasLabels,
+                    datasets: [{
+                        label: 'Cantidad de Personal',
+                        data: categoriasDatos,
+                        backgroundColor: coloresBackground,
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            padding: 10,
+                            cornerRadius: 5,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + ' personas';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+    }
+}
